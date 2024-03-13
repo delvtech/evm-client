@@ -167,7 +167,7 @@ export interface ContractWriteOptions {
   /**
    * A callback for when the transaction has been mined.
    */
-  onTransactionMined?(): void;
+  onTransactionMined?: (hash: `0x${string}`) => void;
 }
 
 export type ContractWriteArgs<
