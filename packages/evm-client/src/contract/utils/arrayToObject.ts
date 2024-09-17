@@ -1,16 +1,18 @@
-import { Abi, AbiItemType, AbiParameter, AbiParameterKind } from 'abitype';
+import { Abi, AbiItemType, AbiParameterKind } from 'abitype';
 import {
   AbiArrayType,
   AbiEntryName,
   AbiObjectType,
 } from 'src/contract/types/AbiEntry';
-import { getAbiEntry } from 'src/contract/utils/getAbiEntry';
+import { getAbiParams } from 'src/contract/utils/getAbiParams';
+import { InvalidAbiParamsError } from 'src/errors/InvalidAbiParamsError';
 
 /**
  * Converts an array of input or output values into an object typ, ensuring the
  * values are properly identified based on their index.
  *
  * @example
+ * ```ts
  * const abi = [
  *   {
  *     type: "function",
@@ -48,6 +50,9 @@ import { getAbiEntry } from 'src/contract/utils/getAbiEntry';
  *   kind: "inputs",
  *   values: [undefined, "0x123", undefined],
  * }); // -> { owner: undefined, spender: "0x123", value: undefined }
+ * ```
+ *
+ * @throws If the number of values exceeds the number of parameters.
  */
 export function arrayToObject<
   TAbi extends Abi,
@@ -69,23 +74,22 @@ export function arrayToObject<
   kind: TParameterKind;
   type: TItemType;
 }): AbiObjectType<TAbi, TItemType, TName, TParameterKind> {
-  const abiEntry = getAbiEntry({ abi, type, name });
-
-  let parameters: AbiParameter[] = [];
-  if (kind in abiEntry) {
-    parameters = (abiEntry as any)[kind];
-  }
-
   const valuesArray = values || [];
 
-  const valuesObject: Record<string, any> = {};
-  parameters.forEach(({ name }, i) => {
-    if (name) {
-      valuesObject[name] = valuesArray[i];
-    } else {
-      valuesObject[i] = valuesArray[i];
-    }
-  });
+  // Find the parameters that match the number of values.
+  const params = getAbiParams({ abi, type, name, kind }).find(
+    (params) => params.length >= valuesArray.length,
+  );
 
-  return valuesObject as any;
+  if (!params) {
+    throw new InvalidAbiParamsError({
+      type,
+      name,
+      values,
+    });
+  }
+
+  return Object.fromEntries(
+    params.map(({ name }, i) => [name || i, valuesArray[i]]),
+  ) as any;
 }

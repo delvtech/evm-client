@@ -1,10 +1,10 @@
-import { Abi, AbiItemType, AbiParameter, AbiParameterKind } from 'abitype';
+import { Abi, AbiItemType, AbiParameterKind } from 'abitype';
 import {
   AbiArrayType,
   AbiEntryName,
   AbiFriendlyType,
 } from 'src/contract/types/AbiEntry';
-import { getAbiEntry } from 'src/contract/utils/getAbiEntry';
+import { arrayToObject } from 'src/exports';
 
 /**
  * Converts an array of input or output values into an
@@ -12,6 +12,7 @@ import { getAbiEntry } from 'src/contract/utils/getAbiEntry';
  * based on their index.
  *
  * @example
+ * ```ts
  * const abi = [
  *   {
  *     type: "function",
@@ -57,6 +58,7 @@ import { getAbiEntry } from 'src/contract/utils/getAbiEntry';
  *   kind: "inputs",
  *   values: [undefined, "0x123", undefined],
  * }); // -> { owner: undefined, spender: "0x123", value: undefined }
+ * ```
  */
 export function arrayToFriendly<
   TAbi extends Abi,
@@ -78,28 +80,19 @@ export function arrayToFriendly<
   kind: TParameterKind;
   type: TItemType;
 }): AbiFriendlyType<TAbi, TItemType, TName, TParameterKind> {
-  const abiEntry = getAbiEntry({ abi, type, name });
+  const object = arrayToObject({ abi, type, name, kind, values });
+  let [firstObjectEntry, ...rest] = Object.entries(object);
 
-  let parameters: AbiParameter[] = [];
-  if (kind in abiEntry) {
-    parameters = (abiEntry as any)[kind];
+  // No parameters
+  if (!firstObjectEntry) {
+    return undefined as any;
   }
 
-  // Single or no parameters
-  if (parameters.length <= 1) {
-    return (values as any[])[0];
+  // Single parameter
+  if (!rest.length) {
+    return firstObjectEntry[1];
   }
 
-  const valuesArray = values || [];
-
-  const friendlyValue: Record<string, any> = {};
-  parameters.forEach(({ name }, i) => {
-    if (name) {
-      friendlyValue[name] = valuesArray[i];
-    } else {
-      friendlyValue[i] = valuesArray[i];
-    }
-  });
-
-  return friendlyValue as any;
+  // Multiple parameters
+  return object as any;
 }

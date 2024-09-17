@@ -27,6 +27,6 @@ export interface CachedReadWriteContract<TAbi extends Abi = Abi>
     ReadWriteContract<TAbi> {}
 
 /** Recursively make all properties in T partial. */
-type DeepPartial<T> = Partial<{
-  [K in keyof T]: DeepPartial<T[K]>;
-}>;
+type DeepPartial<T> = {
+  [K in keyof T]?: DeepPartial<T[K]>;
+};

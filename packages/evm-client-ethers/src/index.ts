@@ -26,7 +26,7 @@ export * from '@delvtech/evm-client/cache';
 export {
   arrayToFriendly,
   arrayToObject,
-  getAbiEntry,
+  getAbiEntries,
   objectToArray,
 } from '@delvtech/evm-client/contract';
 export type {

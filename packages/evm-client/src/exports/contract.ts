@@ -50,5 +50,6 @@ export type {
 // Utils
 export { arrayToFriendly } from 'src/contract/utils/arrayToFriendly';
 export { arrayToObject } from 'src/contract/utils/arrayToObject';
-export { getAbiEntry } from 'src/contract/utils/getAbiEntry';
+export { getAbiEntries } from 'src/contract/utils/getAbiEntries';
+export { getAbiParams } from 'src/contract/utils/getAbiParams';
 export { objectToArray } from 'src/contract/utils/objectToArray';

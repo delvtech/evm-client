@@ -44,7 +44,7 @@ export type AbiEntryName<
  * ```
  */
 export type AbiEntry<
-  TAbi extends Abi,
+  TAbi extends Abi = Abi,
   TItemType extends AbiItemType = AbiItemType,
   TName extends AbiEntryName<TAbi, TItemType> = AbiEntryName<TAbi, TItemType>,
   TStateMutability extends AbiStateMutability = AbiStateMutability,

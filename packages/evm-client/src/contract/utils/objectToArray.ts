@@ -1,16 +1,18 @@
-import { Abi, AbiItemType, AbiParameter, AbiParameterKind } from 'abitype';
+import { Abi, AbiItemType, AbiParameterKind } from 'abitype';
 import {
   AbiArrayType,
   AbiEntryName,
   AbiObjectType,
 } from 'src/contract/types/AbiEntry';
-import { getAbiEntry } from 'src/contract/utils/getAbiEntry';
+import { getAbiParams } from 'src/contract/utils/getAbiParams';
+import { InvalidAbiParamsError } from 'src/errors/InvalidAbiParamsError';
 
 /**
  * Converts an object into an array of input or output values, ensuring the the
  * correct number and order of values are present.
  *
  * @example
+ * ```ts
  * const abi = [
  *   {
  *     type: "function",
@@ -48,6 +50,7 @@ import { getAbiEntry } from 'src/contract/utils/getAbiEntry';
  *   kind: "inputs",
  *   value: { spender: "0x123" },
  * }); // -> [undefined, "0x123", undefined]
+ * ```
  */
 export function objectToArray<
   TAbi extends Abi,
@@ -68,20 +71,27 @@ export function objectToArray<
   type: TItemType;
   value?: Abi extends TAbi ? Record<string, unknown> : TValue;
 }): AbiArrayType<TAbi, TItemType, TName, TParameterKind> {
-  const abiEntry = getAbiEntry({ abi, type, name });
+  const valueObject: Record<string, unknown> =
+    value && typeof value === 'object' ? value : {};
 
-  let parameters: AbiParameter[] = [];
-  if (kind in abiEntry) {
-    parameters = (abiEntry as any)[kind];
+  // Find the parameters that match the number of values.
+  const numValues = Object.keys(valueObject).length;
+  const parameters = getAbiParams({ abi, type, name, kind }).find(
+    (params) => params.length >= numValues,
+  );
+
+  if (!parameters) {
+    throw new InvalidAbiParamsError({
+      type,
+      name,
+      values: value,
+    });
   }
 
   // No parameters
   if (!parameters.length) {
     return [] as AbiArrayType<TAbi, TItemType, TName, TParameterKind>;
   }
-
-  const valueObject: Record<string, unknown> =
-    value && typeof value === 'object' ? value : {};
 
   const array = parameters.map(({ name }, i) => valueObject[name || i]);
 

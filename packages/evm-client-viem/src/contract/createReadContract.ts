@@ -28,6 +28,9 @@ export interface CreateReadContractOptions<TAbi extends Abi = Abi> {
 
 export interface ViemReadContract<TAbi extends Abi = Abi>
   extends ReadContract<TAbi> {
+  /**
+   * Connect a signer to upgrade the contract to a read-write contract.
+   */
   connectWallet(walletClient: WalletClient): ReadWriteContract<TAbi>;
 }
 
@@ -44,9 +47,6 @@ export function createReadContract<TAbi extends Abi = Abi>({
     abi,
     address,
 
-    /**
-     * Connect a signer to upgrade the contract to a read-write contract.
-     */
     connectWallet(walletClient: WalletClient) {
       return createReadWriteContract({
         address,
@@ -78,6 +78,7 @@ export function createReadContract<TAbi extends Abi = Abi>({
         abi,
         functionName,
         output,
+        argsArray,
       }) as FunctionReturn<TAbi, typeof functionName>;
     },
 
@@ -102,6 +103,7 @@ export function createReadContract<TAbi extends Abi = Abi>({
         abi,
         functionName,
         output: result,
+        argsArray,
       }) as FunctionReturn<TAbi, typeof functionName>;
     },
 
