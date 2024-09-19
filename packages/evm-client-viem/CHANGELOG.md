@@ -1,5 +1,12 @@
 # @delvtech/evm-client-viem
 
+## 0.6.4
+
+### Patch Changes
+
+- Updated dependencies [afa0069]
+  - @delvtech/evm-client@0.5.2
+
 ## 0.6.3
 
 ### Patch Changes
@@ -135,7 +142,7 @@
 
 ### Minor Changes
 
-- cc17b3c: Changed the type of all inputs to objects. This means that functions with a single argument (e.g., `balanceOf` will now expect ``{ owner: `0x${string}` }``, not `` `0x${string}` ``). Outputs remain the "Friendly" type which deconstructs to a single primitive type for single outputs values (e.g., `symbol` will return a `string`, not `{ "0": string }`) since many single output return values are unnamed
+- cc17b3c: Changed the type of all inputs to objects. This means that functions with a single argument (e.g., `balanceOf` will now expect `` { owner: `0x${string}` } ``, not `` `0x${string}` ``). Outputs remain the "Friendly" type which deconstructs to a single primitive type for single outputs values (e.g., `symbol` will return a `string`, not `{ "0": string }`) since many single output return values are unnamed
 
 ### Patch Changes
 
