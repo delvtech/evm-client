@@ -1,5 +1,11 @@
 # @delvtech/evm-client
 
+## 0.5.2
+
+### Patch Changes
+
+- afa0069: Ensure Falsy values don't result in cache misses.
+
 ## 0.5.1
 
 ### Patch Changes
@@ -87,7 +93,7 @@
 
 ### Minor Changes
 
-- cc17b3c: Changed the type of all inputs to objects. This means that functions with a single argument (e.g., `balanceOf` will now expect ``{ owner: `0x${string}` }``, not `` `0x${string}` ``). Outputs remain the "Friendly" type which deconstructs to a single primitive type for single outputs values (e.g., `symbol` will return a `string`, not `{ "0": string }`) since many single output return values are unnamed
+- cc17b3c: Changed the type of all inputs to objects. This means that functions with a single argument (e.g., `balanceOf` will now expect `` { owner: `0x${string}` } ``, not `` `0x${string}` ``). Outputs remain the "Friendly" type which deconstructs to a single primitive type for single outputs values (e.g., `symbol` will return a `string`, not `{ "0": string }`) since many single output return values are unnamed
 
 ## 0.0.11
 

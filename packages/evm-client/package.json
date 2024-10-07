@@ -1,6 +1,6 @@
 {
   "name": "@delvtech/evm-client",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -32,11 +32,21 @@
   },
   "typesVersions": {
     "*": {
-      "cache": ["./dist/cache.d.ts"],
-      "contract": ["./dist/contract.d.ts"],
-      "errors": ["./dist/errors.d.ts"],
-      "network": ["./dist/network.d.ts"],
-      "stubs": ["./dist/stubs.d.ts"]
+      "cache": [
+        "./dist/cache.d.ts"
+      ],
+      "contract": [
+        "./dist/contract.d.ts"
+      ],
+      "errors": [
+        "./dist/errors.d.ts"
+      ],
+      "network": [
+        "./dist/network.d.ts"
+      ],
+      "stubs": [
+        "./dist/stubs.d.ts"
+      ]
     }
   },
   "scripts": {
@@ -77,5 +87,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }
