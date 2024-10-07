@@ -1,6 +1,6 @@
 {
   "name": "@delvtech/drift-viem",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "license": "AGPL-3.0",
   "type": "module",
   "main": "dist/index.js",
@@ -18,8 +18,12 @@
   },
   "typesVersions": {
     "*": {
-      ".": ["./dist/index.d.ts"],
-      "testing": ["./dist/testing.d.ts"]
+      ".": [
+        "./dist/index.d.ts"
+      ],
+      "testing": [
+        "./dist/testing.d.ts"
+      ]
     }
   },
   "scripts": {
@@ -39,7 +43,7 @@
     }
   },
   "dependencies": {
-    "@delvtech/drift": "0.0.0"
+    "@delvtech/drift": "0.0.1"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
@@ -54,5 +58,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }
