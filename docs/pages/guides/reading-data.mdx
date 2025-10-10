@@ -144,11 +144,11 @@ declare const tokenA: Address;
 declare const tokenB: Address;
 // ---cut---
 // These will automatically be wrapped into a single multicall request.
-const [name, symbol, totalSupply, balanceOf] = await Promise.all([
+const [name, symbol, totalSupply, decimals] = await Promise.all([
   drift.read({ abi: erc20.abi, address: tokenA, fn: "name" }),
   drift.read({ abi: erc20.abi, address: tokenA, fn: "symbol" }),
-  drift.read({ abi: erc20.abi, address: tokenB, fn: "name" }),
-  drift.read({ abi: erc20.abi, address: tokenB, fn: "symbol" }),
+  drift.read({ abi: erc20.abi, address: tokenB, fn: "totalSupply" }),
+  drift.read({ abi: erc20.abi, address: tokenB, fn: "decimals" }),
 ]);
 ```
 
@@ -328,8 +328,4 @@ await Promise.all([
 // These calls now return immediately from cache
 const name = await token.read("name"); // No network request
 const symbol = await token.read("symbol"); // No network request
-```
-
-```
-
 ```
