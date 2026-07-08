@@ -240,6 +240,12 @@ export {
   toHexString,
 } from "src/utils/hex";
 export { parseKey, stringifyKey } from "src/utils/keys";
+export {
+  DEFAULT_MAX_ATTEMPTS,
+  defaultRetryDelay,
+  retry,
+  type RetryOptions,
+} from "src/utils/retry";
 export type {
   AnyFunction,
   AnyObject,
