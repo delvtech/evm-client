@@ -400,8 +400,22 @@ export async function safeTokenTransfer( // [!code focus:99]
 
 ### Retry Logic
 
-An example of a retry mechanism for write operations that may fail due to
-temporary issues like network errors:
+Drift ships a `retry` utility that calls a function and retries it if it throws,
+with a configurable number of attempts, delay (defaulting to an exponential
+backoff), and an optional `shouldRetry` predicate:
+
+```ts
+import { retry } from "@gud/drift";
+
+const hash = await retry(() => token.write("transfer", { to, amount }), {
+  maxAttempts: 3,
+  // Only retry transient errors.
+  shouldRetry: (error) => isTransient(error),
+});
+```
+
+You can also implement your own, e.g. a retry mechanism for write operations
+that may fail due to temporary issues like network errors:
 
 :::code-group
 
