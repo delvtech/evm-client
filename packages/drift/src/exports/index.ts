@@ -158,6 +158,8 @@ export {
 } from "src/store/LruStore";
 export type { Store } from "src/store/Store";
 export {
+  deserializeValue,
+  serializeValue,
   type WebStorage,
   WebStorageStore,
   type WebStorageStoreOptions,

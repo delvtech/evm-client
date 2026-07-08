@@ -1,6 +1,39 @@
 import { DriftError } from "src/error/DriftError";
 import type { Store } from "src/store/Store";
-import { parseKey, stringifyKey } from "src/utils/keys";
+
+/**
+ * A tag used to encode `BigInt` values as a wrapper object when serializing.
+ * Unlike a plain `"123n"` string suffix, a wrapper object round-trips
+ * unambiguously and never collides with a real string value that happens to
+ * look like a `BigInt` (e.g. a contract's `string` return of `"123n"`).
+ */
+const BIGINT_TAG = "$drift$bigint";
+
+/**
+ * Serializes a value to a JSON string for {@linkcode WebStorageStore}, encoding
+ * `BigInt`s so they round-trip without corrupting look-alike string values.
+ */
+export function serializeValue(value: unknown): string {
+  return JSON.stringify(value, (_key, v) =>
+    typeof v === "bigint" ? { [BIGINT_TAG]: v.toString() } : v,
+  );
+}
+
+/**
+ * Parses a string produced by {@linkcode serializeValue}, restoring `BigInt`
+ * values.
+ */
+export function deserializeValue(text: string): unknown {
+  return JSON.parse(text, (_key, v) => {
+    if (typeof v === "object" && v !== null && Object.keys(v).length === 1) {
+      const tagged = (v as Record<string, unknown>)[BIGINT_TAG];
+      if (typeof tagged === "string") {
+        return BigInt(tagged);
+      }
+    }
+    return v;
+  });
+}
 
 /**
  * A minimal subset of the [Web Storage
@@ -29,7 +62,8 @@ export interface WebStorageStoreOptions {
    * namespaces the store's entries so they don't collide with other data in the
    * same storage, and ensures {@linkcode WebStorageStore.entries entries} and
    * {@linkcode WebStorageStore.clear clear} only touch entries created by this
-   * store.
+   * store. A non-empty prefix is required for that isolation; an empty prefix
+   * makes the store operate on every entry in the storage.
    *
    * @default "drift:"
    */
@@ -37,18 +71,15 @@ export interface WebStorageStoreOptions {
 
   /**
    * Serializes a value into a string for storage. Defaults to a `BigInt`-safe
-   * JSON serializer. Override to add compression, encryption, etc.
-   *
-   * @default stringifyKey
+   * JSON serializer ({@linkcode serializeValue}). Override to add compression,
+   * encryption, etc.
    */
   serialize?: (value: any) => string;
 
   /**
    * Deserializes a stored string back into a value. Must be the inverse of
    * {@linkcode WebStorageStoreOptions.serialize serialize}. Defaults to a
-   * `BigInt`-safe JSON parser.
-   *
-   * @default parseKey
+   * `BigInt`-safe JSON parser ({@linkcode deserializeValue}).
    */
   deserialize?: (value: string) => any;
 }
@@ -85,8 +116,8 @@ export class WebStorageStore implements Store {
   constructor({
     storage = (globalThis as { localStorage?: WebStorage }).localStorage,
     prefix = "drift:",
-    serialize = stringifyKey,
-    deserialize = parseKey,
+    serialize = serializeValue,
+    deserialize = deserializeValue,
   }: WebStorageStoreOptions = {}) {
     if (!storage) {
       throw new DriftError(
@@ -136,7 +167,22 @@ export class WebStorageStore implements Store {
   }
 
   set(key: string, value: any): void {
-    this.storage.setItem(this.#prefixed(key), this.#serialize(value));
+    const prefixedKey = this.#prefixed(key);
+    const serialized: string | undefined = this.#serialize(value);
+    // A value with no serialized form (e.g. `undefined`, a function, or a
+    // symbol) can't be persisted. Remove any stale entry so `has`/`get` stay
+    // consistent rather than storing the string "undefined".
+    if (serialized === undefined) {
+      this.storage.removeItem(prefixedKey);
+      return;
+    }
+    try {
+      this.storage.setItem(prefixedKey, serialized);
+    } catch {
+      // Persisting is best-effort: swallow write failures (e.g. an exceeded
+      // storage quota or private-mode storage) so a failed cache write never
+      // fails the caller. The value is simply re-fetched on the next miss.
+    }
   }
 
   delete(key: string): void {

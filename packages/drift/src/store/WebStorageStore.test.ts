@@ -19,7 +19,8 @@ class MemoryStorage implements WebStorage {
     return value === undefined ? null : value;
   }
   setItem(key: string, value: string) {
-    this.#map.set(key, value);
+    // Real Web Storage coerces the value to a string.
+    this.#map.set(key, String(value));
   }
   removeItem(key: string) {
     this.#map.delete(key);
@@ -48,6 +49,48 @@ describe("WebStorageStore", () => {
       ok: true,
     });
     expect(await store.get("array")).toEqual([1n, 2n, 3n]);
+  });
+
+  it("keeps string values that look like bigints as strings", async () => {
+    const store = new WebStorageStore({ storage: new MemoryStorage() });
+
+    // Plain strings that resemble a serialized bigint must NOT become bigints.
+    await store.set("a", "42n");
+    await store.set("b", "-100n");
+    await store.set("c", { note: "7n", amount: 7n });
+
+    expect(await store.get("a")).toBe("42n");
+    expect(await store.get("b")).toBe("-100n");
+    expect(await store.get("c")).toEqual({ note: "7n", amount: 7n });
+    expect(typeof (await store.get("c")).note).toBe("string");
+    expect(typeof (await store.get("c")).amount).toBe("bigint");
+  });
+
+  it("treats an unserializable value as a delete", async () => {
+    const storage = new MemoryStorage();
+    const store = new WebStorageStore({ storage });
+
+    await store.set("key", 1n);
+    expect(await store.has("key")).toBe(true);
+
+    // A value with no JSON form must clear the entry, not poison it.
+    await store.set("key", undefined as any);
+    expect(await store.has("key")).toBe(false);
+    expect(await store.get("key")).toBeUndefined();
+    // Enumeration must not throw over the (now absent) entry.
+    expect([...store.entries()]).toEqual([]);
+  });
+
+  it("swallows storage write failures (best-effort persistence)", async () => {
+    const storage = new MemoryStorage();
+    storage.setItem = () => {
+      throw new DOMException("quota", "QuotaExceededError");
+    };
+    const store = new WebStorageStore({ storage });
+
+    // A full/failing storage must not throw out of set().
+    expect(() => store.set("key", 123n)).not.toThrow();
+    expect(store.get("key")).toBeUndefined();
   });
 
   it("reports presence and deletes entries", async () => {
