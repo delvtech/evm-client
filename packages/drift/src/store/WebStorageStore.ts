@@ -2,21 +2,32 @@ import { DriftError } from "src/error/DriftError";
 import type { Store } from "src/store/Store";
 
 /**
- * A tag used to encode `BigInt` values as a wrapper object when serializing.
- * Unlike a plain `"123n"` string suffix, a wrapper object round-trips
- * unambiguously and never collides with a real string value that happens to
- * look like a `BigInt` (e.g. a contract's `string` return of `"123n"`).
+ * A `NUL` control character used to sentinel-encode `BigInt` values as strings.
+ * Real cached strings (addresses, hex, symbols, names, etc.) don't contain
+ * `NUL`, and the rare one that does is escaped, so this never collides with real
+ * data. Encoding as a string (rather than a wrapper object) also means a real
+ * object value can never be mistaken for an encoded `BigInt`.
  */
-const BIGINT_TAG = "$drift$bigint";
+const SENTINEL = String.fromCharCode(0); // NUL sentinel
+const BIGINT_PREFIX = `${SENTINEL}n`;
 
 /**
  * Serializes a value to a JSON string for {@linkcode WebStorageStore}, encoding
- * `BigInt`s so they round-trip without corrupting look-alike string values.
+ * `BigInt`s so they round-trip without corrupting look-alike string or object
+ * values.
  */
 export function serializeValue(value: unknown): string {
-  return JSON.stringify(value, (_key, v) =>
-    typeof v === "bigint" ? { [BIGINT_TAG]: v.toString() } : v,
-  );
+  return JSON.stringify(value, (_key, v) => {
+    if (typeof v === "bigint") {
+      return `${BIGINT_PREFIX}${v.toString()}`;
+    }
+    // Escape the (extremely rare) real string that begins with the sentinel so
+    // it can't be misread as an encoded value on the way back.
+    if (typeof v === "string" && v.charCodeAt(0) === 0) {
+      return `${SENTINEL}${v}`;
+    }
+    return v;
+  });
 }
 
 /**
@@ -25,13 +36,16 @@ export function serializeValue(value: unknown): string {
  */
 export function deserializeValue(text: string): unknown {
   return JSON.parse(text, (_key, v) => {
-    if (typeof v === "object" && v !== null && Object.keys(v).length === 1) {
-      const tagged = (v as Record<string, unknown>)[BIGINT_TAG];
-      if (typeof tagged === "string") {
-        return BigInt(tagged);
-      }
+    if (typeof v !== "string" || v.charCodeAt(0) !== 0) {
+      return v;
     }
-    return v;
+    if (v.startsWith(BIGINT_PREFIX)) {
+      const digits = v.slice(BIGINT_PREFIX.length);
+      // Guard against malformed/foreign data so a bad value never throws.
+      return /^-?\d+$/.test(digits) ? BigInt(digits) : v;
+    }
+    // Unescape a real string that was prefixed with an extra sentinel.
+    return v.slice(SENTINEL.length);
   });
 }
 

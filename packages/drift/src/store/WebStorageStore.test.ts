@@ -66,6 +66,23 @@ describe("WebStorageStore", () => {
     expect(typeof (await store.get("c")).amount).toBe("bigint");
   });
 
+  it("never mistakes a real object for an encoded bigint", async () => {
+    const store = new WebStorageStore({ storage: new MemoryStorage() });
+
+    // An object of any shape must round-trip as an object, never be coerced to
+    // a bigint or throw, regardless of its keys/values.
+    const numericLookalike = { $drift$bigint: "123" };
+    const nonNumericLookalike = { $drift$bigint: "abc" };
+    await store.set("numeric", numericLookalike);
+    await store.set("nonNumeric", nonNumericLookalike);
+
+    expect(await store.get("numeric")).toEqual(numericLookalike);
+    expect(typeof (await store.get("numeric")).$drift$bigint).toBe("string");
+    expect(await store.get("nonNumeric")).toEqual(nonNumericLookalike);
+    // Enumeration must not throw over these entries.
+    expect(() => [...store.entries()]).not.toThrow();
+  });
+
   it("treats an unserializable value as a delete", async () => {
     const storage = new MemoryStorage();
     const store = new WebStorageStore({ storage });
