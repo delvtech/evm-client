@@ -73,6 +73,7 @@ Building on Ethereum often means dealing with:
   - [Cache Invalidation](#cache-invalidation)
   - [Preloading Cache Data](#preloading-cache-data)
   - [Direct Access to Cached Data](#direct-access-to-cached-data)
+- [Event Listeners](#event-listeners)
 - [Extending Drift for Your Needs](#extending-drift-for-your-needs)
   - [Extension Points](#extension-points)
     - [Adapters](#adapters)
@@ -565,6 +566,51 @@ both the `Drift.cache` and `Contract.cache` instances.
 > Drift passes its own cache to the contracts it creates via `Drift.contract()`,
 > they'll already be preloaded with the `Drift` instance's cache and any cache
 > operations performed on the contract cache will also affect the `Drift` cache.
+
+## Event Listeners
+
+Attach callbacks that fire as new events, blocks, or signer changes are
+observed. Each listener polls the underlying adapter on an interval and returns
+a function that stops it.
+
+```ts
+// React to a contract's events, e.g. to update a UI when a transfer happens.
+const unsubscribe = contract.onEvent("Transfer", (events) => {
+  for (const event of events) {
+    console.log("Transfer:", event.args);
+  }
+});
+
+// Stop listening.
+unsubscribe();
+```
+
+By default a listener only reports events emitted after it's registered. Pass a
+`fromBlock` to also receive historical events on the first poll, and
+`pollingInterval` to control how often it polls:
+
+```ts
+contract.onEvent("Transfer", (events) => {/* ... */}, {
+  fromBlock: 22147561n,
+  pollingInterval: 8_000,
+});
+```
+
+You can also listen at the client level:
+
+```ts
+// Any contract's events (provide the abi, address, and event name).
+drift.onEvent(
+  { abi: erc20.abi, address, event: "Transfer" },
+  (events) => {/* ... */},
+);
+
+// New blocks.
+drift.onBlock((blockNumber) => console.log("New block:", blockNumber));
+
+// Signer changes (requires a read-write client).
+drift.onSignerChange((address) => console.log("New signer:", address));
+```
 
 ## Extending Drift for Your Needs
 

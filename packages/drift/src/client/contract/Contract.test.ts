@@ -3,7 +3,7 @@ import { createStubEvents } from "src/adapter/utils/testing/createStubEvent";
 import { TestToken } from "src/artifacts/TestToken";
 import { createContract } from "src/client/contract/Contract";
 import { ALICE, BOB } from "src/utils/testing/accounts";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const abi = TestToken.abi;
 const address = "0xAddress";
@@ -64,6 +64,56 @@ describe("Contract", () => {
 
         expect(returnedEvents).toBe(eventsAtEpoch);
       });
+    });
+  });
+
+  describe("onEvent", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it("polls and fires with new events, applying epochBlock", async () => {
+      const event = "Transfer";
+      const epochBlock = 123n;
+      const events = createStubEvents({
+        abi,
+        eventName: event,
+        events: [{ args: { from: ALICE, to: BOB, value: 1n } }],
+      });
+
+      const onEventAdapter = new MockAdapter();
+      onEventAdapter.onGetChainId().resolves(0);
+      onEventAdapter.onGetBlockNumber().callsFake(async () => 200n);
+      const getEventsCalls: any[] = [];
+      onEventAdapter
+        .onGetEvents({ abi, address, event })
+        .callsFake(async (params: any) => {
+          getEventsCalls.push(params);
+          return events;
+        });
+
+      const contract = createContract({
+        abi,
+        address,
+        adapter: onEventAdapter,
+        epochBlock,
+      });
+      const callback = vi.fn();
+      const unsubscribe = contract.onEvent(event, callback, {
+        pollingInterval: 1_000,
+      });
+
+      // First poll uses the contract's epochBlock as fromBlock.
+      await vi.runOnlyPendingTimersAsync();
+      expect(callback).toHaveBeenCalledWith(events);
+      expect(getEventsCalls.at(-1)).toMatchObject({
+        abi,
+        address,
+        event,
+        fromBlock: epochBlock,
+        toBlock: 200n,
+      });
+
+      unsubscribe();
     });
   });
 

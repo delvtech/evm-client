@@ -168,7 +168,14 @@ export {
   createClient,
   type GetBlockOptions,
   type GetBlockWithOptionsReturn,
+  type OnEventParams,
 } from "src/client/Client";
+export {
+  createPoller,
+  DEFAULT_POLLING_INTERVAL,
+  type EventListenerOptions,
+  type Unsubscribe,
+} from "src/client/utils/createPoller";
 
 export {
   ClientCache,
@@ -186,6 +193,7 @@ export {
   type ContractSimulateWriteArgs,
   type ContractWriteArgs,
   createContract,
+  type OnContractEventOptions,
   ReadContract,
   ReadWriteContract,
 } from "src/client/contract/Contract";
