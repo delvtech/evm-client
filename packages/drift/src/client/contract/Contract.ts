@@ -1,14 +1,15 @@
 import type { Abi, Address, Bytes, Hash } from "src/adapter/types/Abi";
 import type {
   Adapter,
-  ContractParams, GetEventsOptions,
+  ContractParams,
+  GetEventsOptions,
   MulticallCalls,
   MulticallOptions,
   MulticallReturn,
   ReadAdapter,
   ReadOptions,
   ReadWriteAdapter,
-  WriteOptions
+  WriteOptions,
 } from "src/adapter/types/Adapter";
 import type { BlockIdentifier } from "src/adapter/types/Block";
 import type { EventLog, EventName } from "src/adapter/types/Event";
@@ -28,6 +29,10 @@ import {
   createClient,
 } from "src/client/Client";
 import { ContractCache } from "src/client/contract/cache/ContractCache";
+import type {
+  EventListenerOptions,
+  Unsubscribe,
+} from "src/client/utils/createPoller";
 import type { Store } from "src/store/Store";
 import type {
   DynamicProperty,
@@ -236,6 +241,53 @@ export class ReadContract<
   }
 
   /**
+   * Registers a callback that's invoked with new logs each time the given event
+   * is emitted by this contract. Polls the client for events with block numbers
+   * later than the last one seen.
+   *
+   * By default the listener only reports events emitted after it's registered.
+   * Pass a `fromBlock` option to also report historical events on the first
+   * poll. The contract's {@linkcode epochBlock} is applied the same way as in
+   * {@linkcode getEvents}.
+   *
+   * **Note**: This polls forward from the latest block seen and does not handle
+   * chain reorganizations, so events from blocks that are re-mined after a
+   * reorg may be missed.
+   *
+   * @returns A function that stops the listener when called.
+   *
+   * @example
+   * ```ts
+   * const unsubscribe = contract.onEvent("Transfer", (events) => {
+   *   for (const event of events) console.log(event.args);
+   * });
+   * ```
+   */
+  onEvent<TEventName extends EventName<TAbi>>(
+    event: TEventName,
+    callback: (events: EventLog<TAbi, TEventName>[]) => void,
+    {
+      filter,
+      fromBlock,
+      ...options
+    }: OnContractEventOptions<TAbi, TEventName> = {},
+  ): Unsubscribe {
+    if (
+      this.epochBlock &&
+      (!fromBlock ||
+        fromBlock === "earliest" ||
+        (typeof fromBlock === "bigint" && fromBlock < this.epochBlock))
+    ) {
+      fromBlock = this.epochBlock;
+    }
+    return this.client.onEvent(
+      { abi: this.abi, address: this.address, event, filter, fromBlock },
+      callback,
+      options,
+    );
+  }
+
+  /**
    * Reads a specified function from the contract.
    */
   read<TFunctionName extends ReadFunctionName<TAbi>>(
@@ -369,6 +421,16 @@ export function createContract<
 }
 
 // Parameter types //
+
+/**
+ * Options for a {@linkcode ReadContract.onEvent} listener. The same as
+ * {@linkcode GetEventsOptions} without `toBlock` (managed by the listener), plus
+ * {@linkcode EventListenerOptions}.
+ */
+export type OnContractEventOptions<
+  TAbi extends Abi = Abi,
+  TEventName extends EventName<TAbi> = EventName<TAbi>,
+> = Omit<GetEventsOptions<TAbi, TEventName>, "toBlock"> & EventListenerOptions;
 
 export type ContractEncodeDeployDataArgs<TAbi extends Abi = Abi> =
   EmptyObject extends ConstructorArgs<TAbi>
