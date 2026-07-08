@@ -22,6 +22,7 @@ describe("createStubTransactionReceipt", () => {
       ]),
       cumulativeGasUsed: expect.any(BigInt),
       gasUsed: expect.any(BigInt),
+      logs: expect.any(Array),
       logsBloom: expect.stringMatching(HEX_REGEX),
       status: expect.toBeOneOf([
         "success",

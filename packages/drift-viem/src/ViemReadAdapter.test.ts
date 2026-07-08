@@ -115,6 +115,7 @@ describe("ViemReadAdapter", () => {
       cumulativeGasUsed: expect.any(BigInt),
       effectiveGasPrice: expect.any(BigInt),
       gasUsed: expect.any(BigInt),
+      logs: expect.any(Array),
       logsBloom: expect.stringMatching(HEX_REGEX),
       status: expect.stringMatching(/^(success|reverted)$/),
       transactionHash: expect.stringMatching(HEX_REGEX),

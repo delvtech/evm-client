@@ -53,25 +53,15 @@ export type EventFilter<
 >;
 
 /**
- * A strongly typed event object based on an abi
+ * A raw event log as included in a transaction receipt or returned from
+ * `eth_getLogs`, i.e. without the event name or decoded arguments.
  */
 // https://github.com/ethereum/execution-apis/blob/de87e24e0f2fbdbaee0fa36ab61b8ec25d3013d0/src/schemas/receipt.yaml#L1
-export type EventLog<
-  TAbi extends Abi = Abi,
-  TEventName extends EventName<TAbi> = EventName<TAbi>,
-> = {
+export interface Log {
   /**
    * The address from which this log originated.
    */
   address: Address;
-  /**
-   * The name of the emitted event.
-   */
-  eventName: TEventName;
-  /**
-   * The decoded arguments of the event.
-   */
-  args: EventArgs<TAbi, TEventName>;
   /**
    * Zero or more 32 Bytes non-indexed arguments of the event.
    */
@@ -93,7 +83,7 @@ export type EventLog<
    */
   logIndex: number | undefined;
   /**
-   * The hash of the transaction this event was created from or `undefined` if pending.
+   * The hash of the transaction this log was created from or `undefined` if pending.
    */
   transactionHash: Hash | undefined;
   /**
@@ -104,4 +94,22 @@ export type EventLog<
    * Whether this log was removed, due to a chain reorganization.
    */
   removed: boolean;
+}
+
+/**
+ * A strongly typed event object based on an abi, extending a raw
+ * {@linkcode Log} with the decoded event name and arguments.
+ */
+export type EventLog<
+  TAbi extends Abi = Abi,
+  TEventName extends EventName<TAbi> = EventName<TAbi>,
+> = Log & {
+  /**
+   * The name of the emitted event.
+   */
+  eventName: TEventName;
+  /**
+   * The decoded arguments of the event.
+   */
+  args: EventArgs<TAbi, TEventName>;
 };

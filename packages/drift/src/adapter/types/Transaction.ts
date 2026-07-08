@@ -1,4 +1,5 @@
 import type { Address, Bytes, Hash, HexString } from "src/adapter/types/Abi";
+import type { Log } from "src/adapter/types/Event";
 
 /** Legacy + EIP-1559 compatible transaction */
 // https://github.com/ethereum/execution-apis/blob/e8727564bb74a1ebcd22a933b7b57eb7b71a11c3/src/schemas/transaction.yaml#L78
@@ -40,8 +41,11 @@ export interface TransactionReceipt extends Required<TransactionInfo> {
    * The amount of gas used for this specific transaction alone.
    */
   gasUsed: bigint;
-  // TODO:
-  // logs: Log[];
+  /**
+   * The logs emitted by this transaction, e.g. events emitted by the called
+   * contract and any contracts it interacted with.
+   */
+  logs: Log[];
   logsBloom: Bytes;
   status: "success" | "reverted";
   /**

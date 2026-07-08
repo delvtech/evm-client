@@ -118,6 +118,7 @@ describe("EthersReadAdapter", () => {
       effectiveGasPrice: expect.any(BigInt),
       from: expect.stringMatching(HEX_REGEX),
       gasUsed: expect.any(BigInt),
+      logs: expect.any(Array),
       logsBloom: expect.stringMatching(HEX_REGEX),
       status: expect.stringMatching(/^(success|reverted)$/),
       to: expect.toBeOneOf([expect.stringMatching(HEX_REGEX), undefined]),

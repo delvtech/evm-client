@@ -102,6 +102,7 @@ export type {
   EventFilter,
   EventLog,
   EventName,
+  Log,
 } from "src/adapter/types/Event";
 export type {
   ConstructorArgs,

@@ -142,6 +142,24 @@ export class Web3Adapter<TWeb3 extends Web3 = Web3>
               ? resolve({
                   ...receipt,
                   effectiveGasPrice: receipt.effectiveGasPrice ?? 0n,
+                  logs: receipt.logs.map((log) => ({
+                    address: log.address ?? "0x",
+                    blockHash: log.blockHash,
+                    blockNumber:
+                      log.blockNumber != null
+                        ? BigInt(log.blockNumber)
+                        : undefined,
+                    data: log.data ?? "0x",
+                    logIndex:
+                      log.logIndex != null ? Number(log.logIndex) : undefined,
+                    removed: log.removed ?? false,
+                    topics: log.topics ?? [],
+                    transactionHash: log.transactionHash,
+                    transactionIndex:
+                      log.transactionIndex != null
+                        ? Number(log.transactionIndex)
+                        : undefined,
+                  })),
                   status: receipt.status ? "success" : "reverted",
                   to: receipt.to || undefined,
                   transactionIndex: Number(receipt.transactionIndex),
