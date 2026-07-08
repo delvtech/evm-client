@@ -18,6 +18,7 @@ export function createStubTransactionReceipt<
     effectiveGasPrice: 0n,
     from: randomAddress(),
     gasUsed: 0n,
+    logs: [],
     logsBloom: randomHex(256),
     status: "success",
     to: randomAddress(),

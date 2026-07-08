@@ -189,11 +189,22 @@ export class DefaultReadAdapter extends BaseReadAdapter implements ReadAdapter {
             })
             .then((receipt) => {
               if (receipt) {
-                const { to, contractAddress, ...rest } =
+                const { to, contractAddress, logs, ...rest } =
                   TransactionReceipt.fromRpc(receipt);
                 resolve({
                   to: to || undefined,
                   contractAddress: contractAddress || undefined,
+                  logs: logs.map((log) => ({
+                    address: log.address,
+                    blockHash: log.blockHash ?? undefined,
+                    blockNumber: log.blockNumber ?? undefined,
+                    data: log.data,
+                    logIndex: log.logIndex ?? undefined,
+                    removed: log.removed,
+                    topics: [...log.topics],
+                    transactionHash: log.transactionHash ?? undefined,
+                    transactionIndex: log.transactionIndex ?? undefined,
+                  })),
                   ...rest,
                 });
               } else {
