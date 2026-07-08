@@ -157,6 +157,13 @@ export {
   type LruStoreOptions,
 } from "src/store/LruStore";
 export type { Store } from "src/store/Store";
+export {
+  deserializeValue,
+  serializeValue,
+  type WebStorage,
+  WebStorageStore,
+  type WebStorageStoreOptions,
+} from "src/store/WebStorageStore";
 export { deleteMatches } from "src/store/utils/deleteMatches";
 export { getOrSet } from "src/store/utils/getOrSet";
 
