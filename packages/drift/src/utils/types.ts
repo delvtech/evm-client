@@ -159,6 +159,29 @@ export type FunctionKey<T> = keyof {
 export type UnionKey<T> = T extends T ? keyof T : never;
 
 /**
+ * Like {@linkcode UnionKey} but excludes wide index-signature keys (`string`,
+ * `number`, `symbol`). A `Record<PropertyKey, never>` (i.e. an "empty" object)
+ * therefore contributes no keys.
+ *
+ * Each member's keys are filtered _before_ they're unioned, otherwise a member
+ * with a wide `string` key would absorb the literal keys of the other members
+ * (`"a" | "b" | string` simplifies to `string`) and they'd all be stripped.
+ */
+export type NamedUnionKey<T> = T extends T
+  ? keyof T extends infer K extends PropertyKey
+    ? K extends K
+      ? string extends K
+        ? never
+        : number extends K
+          ? never
+          : symbol extends K
+            ? never
+            : K
+      : never
+    : never
+  : never;
+
+/**
  * Construct a type in which only a single member of `T` is valid at a time.
  *
  * @example
@@ -181,6 +204,31 @@ export type OneOf<T extends AnyObject> = UnionKey<T> extends infer K extends
       }
     : never
   : never;
+
+/**
+ * Like {@linkcode OneOf}, but only counts {@linkcode NamedUnionKey named keys}
+ * when negating the keys of other members, and returns a non-union `T`
+ * unchanged. This makes it safe to use on a union that includes an "empty"
+ * object (`Record<PropertyKey, never>`), e.g. the parameters of an overloaded
+ * entry where one overload takes no arguments, without polluting the other
+ * members with `[x: string]: undefined` index signatures.
+ *
+ * @example
+ * ```ts
+ * type U = OneOfNamed<{ a: string } | Record<PropertyKey, never>>;
+ * // { a: string } | Record<PropertyKey, never>
+ * ```
+ */
+export type OneOfNamed<T extends AnyObject> =
+  NamedUnionKey<T> extends infer K extends PropertyKey
+    ? T extends T
+      ? [Exclude<K, keyof T>] extends [never]
+        ? T
+        : T & {
+            [_ in Exclude<K, keyof T>]?: never;
+          }
+      : never
+    : never;
 
 /**
  * Creates an object type with a single property `TKey`, which is made optional
