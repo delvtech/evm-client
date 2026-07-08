@@ -600,9 +600,24 @@ const drift = await createDrift({
 
 #### Stores
 
-Implement a custom [`Store`][Store] to manage caching in a way that suits your
-application. The default store is an in-memory LRU cache, but you can create a
-custom store that uses TTL, localStorage, IndexedDB,
+The default store is an in-memory LRU cache. To persist the cache across page
+reloads, pass the built-in [`WebStorageStore`][WebStorageStore], which is backed
+by the [Web Storage
+API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API)
+(`localStorage` by default, or any compatible storage such as `sessionStorage`).
+`BigInt` values are serialized safely out of the box.
+
+```ts
+import { createDrift, WebStorageStore } from "@gud/drift";
+
+const drift = createDrift({
+  // Persist the cache to localStorage across page reloads.
+  store: new WebStorageStore(),
+});
+```
+
+You can also implement a custom [`Store`][Store] to manage caching in a way that
+suits your application, using TTL, IndexedDB,
 [QueryClient](https://tanstack.com/query/latest/docs/reference/QueryClient), or
 any other storage mechanism, sync or async.
 
@@ -659,5 +674,6 @@ Drift is open-source software licensed under the [Apache 2.0](./LICENSE).
 [Adapter]: ./packages/drift/src/adapter/types/Adapter.ts#L23
 [DefaultAdapter]: ./packages/drift/src/adapter/DefaultAdapter.ts#L57
 [Store]: ./packages/drift/src/store/Store.ts#L7
+[WebStorageStore]: ./packages/drift/src/store/WebStorageStore.ts#L79
 [Client]: ./packages/drift/src/client/Client.ts#L30
 [Drift]: ./packages/drift/src/client/Drift.ts#L27
