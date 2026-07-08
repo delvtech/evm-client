@@ -11,6 +11,7 @@ import type {
   EmptyObject,
   Eval,
   ExtractFiltered,
+  OneOfNamed,
   Replace,
 } from "src/utils/types";
 
@@ -225,6 +226,11 @@ export type AbiArrayType<
 /**
  * Get an object of primitive types for any ABI parameters.
  *
+ * For an overloaded entry (e.g. an overloaded function), the result is a
+ * discriminated union so that only the parameters of a single overload can be
+ * used at a time, rather than a plain union that would allow mixing parameters
+ * from different overloads.
+ *
  * @example
  * ```ts
  * type ApproveArgs = AbiObjectType<Erc20Abi, "function", "approve", "inputs">;
@@ -232,6 +238,9 @@ export type AbiArrayType<
  *
  * type Balance = AbiObjectType<Erc20Abi, "function", "balanceOf", "outputs">;
  * // -> { balance: bigint }
+ *
+ * type FooArgs = AbiObjectType<OverloadedAbi, "function", "foo", "inputs">;
+ * // -> OneOf<{ num: bigint } | { name: string }>
  * ```
  */
 export type AbiObjectType<
@@ -239,8 +248,8 @@ export type AbiObjectType<
   TItemType extends AbiItemType = AbiItemType,
   TName extends AbiEntryName<TAbi, TItemType> = AbiEntryName<TAbi, TItemType>,
   TParameterKind extends AbiParameterKind = AbiParameterKind,
-> = AbiParametersToObject<
-  AbiParameters<TAbi, TItemType, TName, TParameterKind>
+> = OneOfNamed<
+  AbiParametersToObject<AbiParameters<TAbi, TItemType, TName, TParameterKind>>
 >;
 
 /**
